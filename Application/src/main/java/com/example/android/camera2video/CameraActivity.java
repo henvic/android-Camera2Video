@@ -17,9 +17,16 @@
 package com.example.android.camera2video;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.widget.ImageView;
 
 public class CameraActivity extends Activity {
+    static final int REQUEST_IMAGE_CAPTURE = 1;
+    private Bitmap mImageBitmap;
+    private String mCurrentPhotoPath;
+    private ImageView mImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,5 +38,4 @@ public class CameraActivity extends Activity {
                     .commit();
         }
     }
-
 }

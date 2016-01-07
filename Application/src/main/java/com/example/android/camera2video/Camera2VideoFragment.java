@@ -24,8 +24,10 @@ import android.app.DialogFragment;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
@@ -38,7 +40,9 @@ import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.MediaRecorder;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
@@ -53,6 +57,7 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -66,6 +71,37 @@ import java.util.concurrent.TimeUnit;
 
 public class Camera2VideoFragment extends Fragment
         implements View.OnClickListener, FragmentCompat.OnRequestPermissionsResultCallback {
+    static final int REQUEST_IMAGE_CAPTURE = 1;
+    private Bitmap mImageBitmap;
+    private String mCurrentPhotoPath;
+    private ImageView mImageView;
+
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static String[] PERMISSIONS_STORAGE = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+
+    /**
+     * Checks if the app has permission to write to device storage
+     *
+     * If the app does not has permission then the user will be prompted to grant permissions
+     *
+     * @param activity
+     */
+    public static void verifyStoragePermissions(Activity activity) {
+        // Check if we have write permission
+        int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(
+                    activity,
+                    PERMISSIONS_STORAGE,
+                    REQUEST_EXTERNAL_STORAGE
+            );
+        }
+    }
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
 
@@ -403,6 +439,7 @@ public class Camera2VideoFragment extends Fragment
             return;
         }
         final Activity activity = getActivity();
+        verifyStoragePermissions(activity);
         if (null == activity || activity.isFinishing()) {
             return;
         }
@@ -430,6 +467,7 @@ public class Camera2VideoFragment extends Fragment
             }
             configureTransform(width, height);
             mMediaRecorder = new MediaRecorder();
+
             manager.openCamera(cameraId, mStateCallback, null);
         } catch (CameraAccessException e) {
             Toast.makeText(activity, "Cannot access the camera.", Toast.LENGTH_SHORT).show();
@@ -569,7 +607,11 @@ public class Camera2VideoFragment extends Fragment
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mMediaRecorder.setOutputFile(getVideoFile(activity).getAbsolutePath());
+
+//        mMediaRecorder.setOutputFile(getVideoFile(activity).getAbsolutePath());
+        String path = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "video3.mp4").getAbsolutePath();
+        System.out.println(path);
+        mMediaRecorder.setOutputFile(path);
         mMediaRecorder.setVideoEncodingBitRate(10000000);
         mMediaRecorder.setVideoFrameRate(30);
         mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
@@ -581,9 +623,9 @@ public class Camera2VideoFragment extends Fragment
         mMediaRecorder.prepare();
     }
 
-    private File getVideoFile(Context context) {
-        return new File(context.getExternalFilesDir(null), "video.mp4");
-    }
+//    private File getVideoFile(Context context) {
+//        return new File(context.getExternalFilesDir(null), "video.mp4");
+//    }
 
     private void startRecordingVideo() {
         try {
@@ -605,11 +647,16 @@ public class Camera2VideoFragment extends Fragment
         // Stop recording
         mMediaRecorder.stop();
         mMediaRecorder.reset();
-        Activity activity = getActivity();
-        if (null != activity) {
-            Toast.makeText(activity, "Video saved: " + getVideoFile(activity),
-                    Toast.LENGTH_SHORT).show();
-        }
+//        Activity activity =
+        getActivity();
+//        if (null != activity) {
+//            Toast.makeText(activity, "Video saved: " + getVideoFile(activity),
+//                    Toast.LENGTH_SHORT).show();
+
+//            File from = new File(activity.getExternalFilesDir(null), "video.mp4");
+//            File target = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES), "video.mp4");;
+//            from.renameTo(target);
+//        }
         startPreview();
     }
 
